@@ -1,0 +1,2 @@
+# lintick_inventario
+
