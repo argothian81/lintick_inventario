@@ -37,4 +37,12 @@ public interface IBusiness_Inventario {
      * @throws DataException 
      */
     public Producto obtenerCantidaById(Integer id) throws DataException;
+    
+    /**
+     * 
+     * @param compra
+     * @return
+     * @throws DataException 
+     */
+    public Producto comprarProducto(Inventario compra) throws DataException;
 }

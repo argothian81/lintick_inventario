@@ -77,6 +77,7 @@ public class Business_Inventario implements IBusiness_Inventario {
         Inventario rInventario = null;
         Producto rProducto = null;
         Integer nueva = 0;
+        StringBuilder mensaje;
         
         try {
             
@@ -102,20 +103,44 @@ public class Business_Inventario implements IBusiness_Inventario {
             rInventario = crearInventario(producto);
             rProducto.setCantidad(rInventario.getCantidad());
             
+            mensaje = new StringBuilder();
+            mensaje.append("Buenos días/tardes");
+            mensaje.append("\n");
+            mensaje.append("Se ha reagistrado una nueva actualización de inventario sobre el producto ");
+            mensaje.append(rProducto.getNombre());
+            mensaje.append("(");
+            mensaje.append(producto.getId_producto());
+            mensaje.append(").");
+            mensaje.append("\n");
+            mensaje.append("-------------------------------------------------------------------------------");
+            mensaje.append("\n");
+            mensaje.append("Producto: ");
+            mensaje.append(rProducto.getNombre());
+            mensaje.append("(");
+            mensaje.append(producto.getId_producto());
+            mensaje.append(")");
+            mensaje.append("\n");
+            mensaje.append("Cantidad anterior: ");
+            mensaje.append(rProducto.getCantidad());
+            mensaje.append("\n");
+            mensaje.append("Cantidad nueva: ");
+            mensaje.append(nueva);
+            mensaje.append("\n");
+            
             try {
                 Correo correo = new Correo();
-                correo.enviarCorreo();
+                correo.enviarCorreo(mensaje.toString());
             } catch (DataException e) {
                 logger.error("Error enviando correo. " + e.getMessage());
             }
             
         } catch (DataException e) {
-            logger.error("Error actualizando inventario para el producto." + e.getMessage());
+            logger.error("Error actualizando inventario para el producto. " + e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("Error actualizando inventario." + e.getMessage());
+            logger.error("Error actualizando inventario. " + e.getMessage());
 //            throw e;
-            throw new DataException(500, "Error guardando el producto." + e.getMessage());
+            throw new DataException(500, "Erroractualizando inventario.");
         }
         
         return rProducto;
@@ -174,16 +199,143 @@ public class Business_Inventario implements IBusiness_Inventario {
 //            throw e;
             throw new DataException(404, "Producto " + id + " no existe.");
         } catch (DataException e) {
-            logger.error("Error actualizando inventario para el producto." + e.getMessage());
+            logger.error("Error obteniendo producto. " + e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("Error actualizando inventario." + e.getMessage());
+            logger.error("Error obteniendo producto. " + e.getMessage());
 //            throw e;
-            throw new DataException(500, "Error guardando el producto." + e.getMessage());
+            throw new DataException(500, "Error obteniendo producto. ");
         }
         
         return rProducto;
     
+    }
+
+    /**
+     * Business para realizar compra
+     * 
+     * @param compra
+     * @return
+     * @throws DataException 
+     */
+    @Override
+    public Producto comprarProducto(Inventario compra) throws DataException {
+        logger.info("Realizando compra.");
+        Inventario rInventario = null;
+        Producto rProducto = null;
+        Integer nueva = 0;
+        StringBuilder mensaje;
+        
+        try {
+            
+        //Conectando a servicio de productos
+            this.restClient = RestClient.builder().baseUrl("http://localhost:8080").build();
+            
+            Data dataResponse = this.restClient.get().uri("/producto/{id}", compra.getId_producto()).retrieve().body(Data.class);
+        
+        //Validando que el producto exista
+            if (dataResponse.getRc() != 200) {
+                logger.info("Producto " + compra.getId_producto() + " no existe.");
+                throw new DataException(404, "Producto " + compra.getId_producto() + " no existe.");
+            }
+            
+            if (rep_inventario.existsById(Long.valueOf(compra.getId_producto().toString()))) {
+                logger.info("Producto " + compra.getId_producto() + " sin inventario. Favor añadir productos");
+                throw new DataException(404, "Producto " + compra.getId_producto() + " sin inventario. Favor añadir productos");
+            }
+            
+            rProducto = obtenerCantidaById(compra.getId_producto());
+            
+            mensaje = new StringBuilder();
+        
+        //Validando existencia de producto
+            if (rProducto.getCantidad() < compra.getCantidad()) {
+                logger.info("No hay suficientes " + rProducto.getNombre() + "(" + compra.getId_producto() + ") en inventario. Favor escoja menos cantidad o solicite el aumento de inventario");
+                
+                try {
+                    mensaje.append("Buenos días/tardes");
+                    mensaje.append("\n");
+                    mensaje.append("Se intentó realizar una compra,  pero el producto no presenta inventario suficiente ");
+                    mensaje.append(rProducto.getNombre());
+                    mensaje.append("(");
+                    mensaje.append(compra.getId_producto());
+                    mensaje.append("), pero no hay inventario suficiente.");
+                    mensaje.append("\n");
+                    mensaje.append("-------------------------------------------------------------------------------");
+                    mensaje.append("\n");
+                    mensaje.append("Producto: ");
+                    mensaje.append(rProducto.getNombre());
+                    mensaje.append("(");
+                    mensaje.append(compra.getId_producto());
+                    mensaje.append(")");
+                    mensaje.append("\n");
+                    mensaje.append("Cantidad actual: ");
+                    mensaje.append(rProducto.getCantidad());
+                    mensaje.append("\n");
+                    mensaje.append("Cantidad solicitada: ");
+                    mensaje.append(compra.getCantidad());
+                    mensaje.append("\n");
+                    
+                //Correo de alerta
+                    Correo correo = new Correo();
+                    correo.enviarCorreo(mensaje.toString());
+                } catch (DataException e) {
+                    logger.error("Error enviando correo. " + e.getMessage());
+                }
+                
+                throw new DataException(400, "No hay suficientes " + rProducto.getNombre() + "(" + compra.getId_producto() + ") en inventario. Favor escoja menos cantidad o solicite el aumento de inventario");
+            }
+            
+        //Realizando actualización de inventario
+            nueva = rProducto.getCantidad() - compra.getCantidad();
+            
+            compra.setCantidad(nueva);
+            
+            rInventario = crearInventario(compra);
+            rProducto.setCantidad(rInventario.getCantidad());
+            
+            try {
+                mensaje.append("Buenos días/tardes");
+                mensaje.append("\n");
+                mensaje.append("Se realizó una compra por el producto ");
+                
+                mensaje.append(rProducto.getNombre());
+                mensaje.append("(");
+                mensaje.append(compra.getId_producto());
+                mensaje.append(").");
+                mensaje.append("\n");
+                mensaje.append("-------------------------------------------------------------------------------");
+                mensaje.append("\n");
+                mensaje.append("Producto: ");
+                mensaje.append(rProducto.getNombre());
+                mensaje.append("(");
+                mensaje.append(compra.getId_producto());
+                mensaje.append(")");
+                mensaje.append("\n");
+                mensaje.append("Cantidad solicitada: ");
+                mensaje.append(compra.getCantidad());
+                mensaje.append("\n");
+                mensaje.append("Cantidad actual (luego de la compra): ");
+                mensaje.append(nueva);
+                mensaje.append("\n");
+                
+            //Mensaje de compra exitosa
+                Correo correo = new Correo();
+                correo.enviarCorreo(mensaje.toString());
+            } catch (DataException e) {
+                logger.error("Error enviando correo. " + e.getMessage());
+            }
+            
+        } catch (DataException e) {
+            logger.error("Error realizando compra para el producto. " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error realizando compra para el producto. " + e.getMessage());
+//            throw e;
+            throw new DataException(500, "Error realizando compra para el producto. ");
+        }
+        
+        return rProducto;
     }
     
 }

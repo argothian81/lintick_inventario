@@ -5,8 +5,6 @@
 package com.inventario.correo;
 
 import com.inventario.model.DataException;
-import com.inventario.rest.InventarioController;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -43,6 +41,7 @@ public class Correo {
 
             Authenticator auth = new Authenticator() {
                             //override the getPasswordAuthentication method
+                            @Override
                             protected PasswordAuthentication getPasswordAuthentication() {
                                     return new PasswordAuthentication(prop.getProperty("smtp.auth"), prop.getProperty("smtp.pass"));
                             }
@@ -76,11 +75,11 @@ public class Correo {
     
     /**
      * 
-     * @param mailTo
+     * @param mensaje
      * @return
      * @throws DataException 
      */
-    public boolean enviarCorreo() throws DataException{
+    public boolean enviarCorreo(String mensaje) throws DataException{
         logger.info("Cargando archivo de correo.");
         
         try {
@@ -94,19 +93,22 @@ public class Correo {
             
             msg.setSubject("Actualización de inventario", "UTF-8");
             
-            msg.setText(prop.getProperty("smtp.message"), "UTF-8");
+            msg.setText(mensaje, "UTF-8");
             
             msg.setSentDate(new Date());
             
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(prop.getProperty("smtp.to"), false));
-            System.out.println("Message is ready");
+            
             Transport.send(msg);
             
         } catch (MessagingException ex) {
-            logger.error("No se pudo enviar el correo." + ex.getMessage());
+            logger.error("No se pudo enviar el correo. " + ex.getMessage());
             throw new DataException(500, "No se pudo enviar el correo.");
         } catch (UnsupportedEncodingException ex) {
-            logger.error("No se pudo enviar el correo." + ex.getMessage());
+            logger.error("No se pudo enviar el correo. " + ex.getMessage());
+            throw new DataException(500, "No se pudo enviar el correo.");
+        } catch (Exception ex) {
+            logger.error("No se pudo enviar el correo. " + ex.getMessage());
             throw new DataException(500, "No se pudo enviar el correo.");
         }
         
