@@ -14,3 +14,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+springdoc:
+  packagesToScan: com.inventario.rest, com.inventario.business
+  pathsToMatch: /**

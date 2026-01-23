@@ -9,6 +9,8 @@ import com.inventario.model.Data;
 import com.inventario.model.DataException;
 import com.inventario.model.Inventario;
 import com.inventario.model.Producto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +49,8 @@ public class InventarioController {
             value = "/crear", 
             produces = "application/vnd.api+json", 
             method=RequestMethod.POST)
-    public ResponseEntity<Data> crearInventarioById(@RequestBody Inventario prod) {
+    @Operation(summary = "Crear un nuevo inventario")
+    public ResponseEntity<Data> crearInventarioById(@Parameter(description = "ID Producto, en objeto Inventario", required = true) @RequestBody Inventario prod) {
         logger.info("Iniciando el método insertar Producto.");
         
         try {
@@ -77,7 +80,8 @@ public class InventarioController {
             value = "/actualizar", 
             produces = "application/vnd.api+json", 
             method=RequestMethod.POST)
-    public ResponseEntity<Data> actualizarInventarioById(@RequestBody Inventario prod) {
+    @Operation(summary = "Actualiza las cantidades dentro del inventario")
+    public ResponseEntity<Data> actualizarInventarioById(@Parameter(description = "Objeto Inventario", required = true) @RequestBody Inventario prod) {
         logger.info("Iniciando el método insertar Producto.");
         
         try {
@@ -104,7 +108,8 @@ public class InventarioController {
      * @return 
      */
     @GetMapping("/cantidad/{id}")
-    public ResponseEntity<Data> consultarPorductos(@PathVariable Integer id) {
+    @Operation(summary = "Consulta las cantidades de cada producto")
+    public ResponseEntity<Data> consultarPorductos(@Parameter(description = "ID Producto", required = true) @PathVariable Integer id) {
         logger.info("Entrando a consultar todo.");
         
         try {

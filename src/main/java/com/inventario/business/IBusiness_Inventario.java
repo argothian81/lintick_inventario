@@ -25,13 +25,14 @@ public interface IBusiness_Inventario {
     /**
      * 
      * @param producto
+     * @return 
      * @throws DataException 
      */
     public Producto actualizarInventario(Inventario producto) throws DataException;
     
     /**
      * 
-     * @param producto
+     * @param id
      * @return
      * @throws DataException 
      */

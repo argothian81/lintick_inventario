@@ -14,29 +14,21 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 /**
  *
  * @author USUARIO
  */
+@Service
 public class Business_Inventario implements IBusiness_Inventario {
 
     private static final Logger logger = LoggerFactory.getLogger(Business_Inventario.class);
-    private final RestTemplate restTemplate;
+    private RestClient restClient;
     
     @Autowired
     IRepository_Inventario rep_inventario;
-
-    /**
-     * 
-     * @param restTemplate 
-     */
-    @Autowired
-    public Business_Inventario(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
     
     /**
      * 
@@ -50,10 +42,11 @@ public class Business_Inventario implements IBusiness_Inventario {
         Inventario rInventario = null;
         
         try {
+            this.restClient = RestClient.builder().baseUrl("http://localhost:8080").build();
             
-            ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + producto.getId_producto(), Data.class);
+            Data dataResponse = this.restClient.get().uri("/producto/{id}", producto.getId_producto()).retrieve().body(Data.class);
             
-            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
+            if (dataResponse.getRc() != 200) {
                 logger.info("Producto " + producto.getId_producto() + " no existe.");
                 throw new DataException(404, "Producto " + producto.getId_producto() + " no existe.");
             }
@@ -83,12 +76,15 @@ public class Business_Inventario implements IBusiness_Inventario {
         logger.info("Actualizando inventario.");
         Inventario rInventario = null;
         Producto rProducto = null;
+        Integer nueva = 0;
         
         try {
             
-            ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + producto.getId_producto(), Data.class);
+            this.restClient = RestClient.builder().baseUrl("http://localhost:8080").build();
             
-            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
+            Data dataResponse = this.restClient.get().uri("/producto/{id}", producto.getId_producto()).retrieve().body(Data.class);
+            
+            if (dataResponse.getRc() != 200) {
                 logger.info("Producto " + producto.getId_producto() + " no existe.");
                 throw new DataException(404, "Producto " + producto.getId_producto() + " no existe.");
             }
@@ -99,6 +95,9 @@ public class Business_Inventario implements IBusiness_Inventario {
             }
             
             rProducto = obtenerCantidaById(producto.getId_producto());
+            nueva = rProducto.getCantidad() + producto.getCantidad();
+            
+            producto.setCantidad(nueva);
             
             rInventario = crearInventario(producto);
             rProducto.setCantidad(rInventario.getCantidad());
@@ -136,9 +135,11 @@ public class Business_Inventario implements IBusiness_Inventario {
         
         try {
             
-            ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + id, Data.class);
+            this.restClient = RestClient.builder().baseUrl("http://localhost:8080").build();
             
-            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
+            Data dataResponse = this.restClient.get().uri("/producto/{id}", id).retrieve().body(Data.class);
+            
+            if (dataResponse.getRc() != 200) {
                 logger.info("Producto " + id + " no existe.");
                 throw new DataException(404, "Producto " + id + " no existe.");
             }
@@ -150,7 +151,7 @@ public class Business_Inventario implements IBusiness_Inventario {
                 logger.info("nombre " + rProducto.getNombre());
             }
             
-            rProducto = (Producto) dataResponse.getBody().getRespuesta();
+            rProducto = (Producto) dataResponse.getRespuesta();
             
             if (rep_inventario.existsById(Long.valueOf(id.toString()))) {
                 logger.info("Producto " + id + " sin inventario. Favor añadir productos");
