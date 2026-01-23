@@ -130,4 +130,35 @@ public class InventarioController {
         }
         
     }
+    
+    /**
+     * 
+     * @param prod
+     * @return 
+     */
+    @RequestMapping(
+            value = "/comprar", 
+            produces = "application/vnd.api+json", 
+            method=RequestMethod.POST)
+    @Operation(summary = "Realiza la compra de un producto especifico")
+    public ResponseEntity<Data> comprarProducto(@Parameter(description = "Objeto Inventario", required = true) @RequestBody Inventario prod) {
+        logger.info("Iniciando el método insertar Producto.");
+        
+        try {
+            Inventario producto = inventarioBusiness.comprarProducto(prod);
+            logger.info("Proces OK.");
+            
+            respuesta = new Data(200,"Proceso OK", producto);
+            return new ResponseEntity<>(respuesta, HttpStatus.OK);
+        
+        } catch (DataException e) {
+            logger.error(e.getMessage());
+            respuesta = new Data(e.getRc(), e.getMessage(), null);
+            return new ResponseEntity<>(respuesta, e.getRc() == 200 ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            respuesta = new Data(500, "Error en el proceso, " + e.getMessage(), null);
+            return new ResponseEntity<>(respuesta, HttpStatus.BAD_GATEWAY);
+        }
+    }
 }
