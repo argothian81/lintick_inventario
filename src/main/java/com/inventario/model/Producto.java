@@ -4,12 +4,8 @@
  */
 package com.inventario.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import nl.michelbijnen.jsonapi.annotation.JsonApiObject;
 import nl.michelbijnen.jsonapi.annotation.JsonApiProperty;
-import nl.michelbijnen.jsonapi.generator.JsonApiDtoExtendable;
 
 /**
  *
@@ -17,11 +13,7 @@ import nl.michelbijnen.jsonapi.generator.JsonApiDtoExtendable;
  */
 
 @JsonApiObject("Producto")
-@Entity
-@Table(name = "productos")
-public class Producto extends JsonApiDtoExtendable {
-    
-    @Id
+public class Producto extends Inventario {
     
     @JsonApiProperty
     private Integer id_producto;

@@ -9,6 +9,7 @@ import com.inventario.model.DataException;
 import com.inventario.model.Inventario;
 import com.inventario.model.Producto;
 import com.inventario.repository.IRepository_Inventario;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ public class Business_Inventario implements IBusiness_Inventario {
             
             ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + producto.getId_producto(), Data.class);
             
-            if (dataResponse.getStatusCode().is2xxSuccessful()) {
+            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
                 logger.info("Producto " + producto.getId_producto() + " no existe.");
                 throw new DataException(404, "Producto " + producto.getId_producto() + " no existe.");
             }
@@ -73,11 +74,107 @@ public class Business_Inventario implements IBusiness_Inventario {
     /**
      * 
      * @param producto
+     * @return 
      * @throws DataException 
      */
     @Override
-    public void actualizarInventario(Inventario producto) throws DataException {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public Producto actualizarInventario(Inventario producto) throws DataException {
+        logger.info("Actualizando inventario.");
+        Inventario rInventario = null;
+        Producto rProducto = null;
+        
+        try {
+            
+            ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + producto.getId_producto(), Data.class);
+            
+            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
+                logger.info("Producto " + producto.getId_producto() + " no existe.");
+                throw new DataException(404, "Producto " + producto.getId_producto() + " no existe.");
+            }
+            
+            if (rep_inventario.existsById(Long.valueOf(producto.getId_producto().toString()))) {
+                logger.info("Producto " + producto.getId_producto() + " sin inventario. Favor añadir productos");
+                throw new DataException(404, "Producto " + producto.getId_producto() + " sin inventario. Favor añadir productos");
+            }
+            
+            rProducto = obtenerCantidaById(producto.getId_producto());
+            
+            rInventario = crearInventario(producto);
+            rProducto.setCantidad(rInventario.getCantidad());
+            
+        } catch (DataException e) {
+            logger.error("Error actualizando inventario para el producto." + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error actualizando inventario." + e.getMessage());
+//            throw e;
+            throw new DataException(500, "Error guardando el producto." + e.getMessage());
+        }
+        
+        return rProducto;
+    }
+
+    /**
+     * 
+     * @param id
+     * @return
+     * @throws DataException 
+     */
+    @Override
+    public Producto obtenerCantidaById(Integer id) throws DataException {
+        logger.info("Actualizando inventario.");
+        Inventario rInventario = null;
+        Producto rProducto = null;
+        
+        try {
+            
+            ResponseEntity<Data> dataResponse = restTemplate.getForEntity("http://localhost:8080/producto/" + id, Data.class);
+            
+            if (!dataResponse.getStatusCode().is2xxSuccessful()) {
+                logger.info("Producto " + id + " no existe.");
+                throw new DataException(404, "Producto " + id + " no existe.");
+            }
+            
+            if (rProducto == null) {
+                logger.error("Producto " + id + " no existe.");
+                throw new EntityNotFoundException("Producto " + id + " no existe.");
+            } else {
+                logger.info("nombre " + rProducto.getNombre());
+            }
+            
+            rProducto = (Producto) dataResponse.getBody().getRespuesta();
+            
+            if (rep_inventario.existsById(Long.valueOf(id.toString()))) {
+                logger.info("Producto " + id + " sin inventario. Favor añadir productos");
+                throw new DataException(404, "Producto " + id + " sin inventario. Favor añadir productos");
+            }
+            
+            rInventario = rep_inventario.getReferenceById(Long.valueOf(id.toString()));
+            
+            if (rInventario == null) {
+                logger.error("Producto " + id + " no existe.");
+                throw new EntityNotFoundException("Producto " + id + " no existe.");
+            } else {
+                logger.info("id " + rInventario.getId_producto() + " y cantidad " + rInventario.getCantidad());
+            }
+            
+            rProducto.setCantidad(rInventario.getCantidad());
+            
+        } catch (EntityNotFoundException e) {
+            logger.error("Producto " + id + " no existe." + e.getMessage());
+//            throw e;
+            throw new DataException(404, "Producto " + id + " no existe.");
+        } catch (DataException e) {
+            logger.error("Error actualizando inventario para el producto." + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error actualizando inventario." + e.getMessage());
+//            throw e;
+            throw new DataException(500, "Error guardando el producto." + e.getMessage());
+        }
+        
+        return rProducto;
+    
     }
     
 }

@@ -6,6 +6,7 @@ package com.inventario.business;
 
 import com.inventario.model.DataException;
 import com.inventario.model.Inventario;
+import com.inventario.model.Producto;
 
 /**
  *
@@ -26,6 +27,13 @@ public interface IBusiness_Inventario {
      * @param producto
      * @throws DataException 
      */
-    public void actualizarInventario(Inventario producto) throws DataException;
+    public Producto actualizarInventario(Inventario producto) throws DataException;
     
+    /**
+     * 
+     * @param producto
+     * @return
+     * @throws DataException 
+     */
+    public Producto obtenerCantidaById(Integer id) throws DataException;
 }
