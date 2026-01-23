@@ -4,6 +4,7 @@
  */
 package com.inventario.business;
 
+import com.inventario.correo.Correo;
 import com.inventario.model.Data;
 import com.inventario.model.DataException;
 import com.inventario.model.Inventario;
@@ -101,6 +102,13 @@ public class Business_Inventario implements IBusiness_Inventario {
             
             rInventario = crearInventario(producto);
             rProducto.setCantidad(rInventario.getCantidad());
+            
+            try {
+                Correo correo = new Correo();
+                correo.enviarCorreo();
+            } catch (DataException e) {
+                logger.error("Error enviando correo. " + e.getMessage());
+            }
             
         } catch (DataException e) {
             logger.error("Error actualizando inventario para el producto." + e.getMessage());
